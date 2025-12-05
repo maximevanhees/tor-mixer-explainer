@@ -1,0 +1,48 @@
+sequenceDiagram
+    participant C as Client
+    participant R1 as Relay 1 (Guard)
+    participant R2 as Relay 2 (Middle)
+    participant R3 as Relay 3 (Exit)
+
+    Note over C, R3: PHASE 1: Connect to First Hop
+
+    C->>R1: CREATE2 (Contains Handshake Info)
+    Note right of C: "Open a new connection... send CREATE2"
+    R1->>C: CREATED2 (Contains Reply Handshake)
+    Note left of R1: "Completes handshake... replies with CREATED2"
+    
+    Note over C: Client derives keys for R1 (Kf_1, Kb_1)
+
+    Note over C, R3: PHASE 2: Extend to Second Hop
+
+    C->>R1: Relay Message: EXTEND2 (Target: R2, Payload: Handshake for R2)
+    Note right of C: "Send EXTEND2 message along the circuit"
+    
+    Note over R1: R1 decrypts, sees EXTEND2 for R2
+    
+    R1->>R2: CREATE2 (Payload: HLEN, HTYPE, HDATA from EXTEND2)
+    Note left of R1: "Sends CREATE2 to next router"
+    
+    R2->>R1: CREATED2 (Reply Handshake)
+    
+    R1->>C: Relay Message: EXTENDED2 (Contains R2's Reply)
+    Note left of R1: "Packs body into EXTENDED2... sends up circuit"
+    
+    Note over C: Client verifies, derives keys for R2
+
+    Note over C, R3: PHASE 3: Extend to Third Hop
+
+    C->>R1: Encrypted Relay Message
+    R1->>R2: Relay Message: EXTEND2 (Target: R3, Payload: Handshake for R3)
+    Note right of C: Client tunnels request through R1 to R2
+    
+    Note over R2: R2 decrypts, sees EXTEND2 for R3
+    
+    R2->>R3: CREATE2 (Payload: HLEN, HTYPE, HDATA from EXTEND2)
+    R3->>R2: CREATED2 (Reply Handshake)
+    
+    R2->>R1: Encrypted Relay Message
+    R1->>C: Relay Message: EXTENDED2 (Contains R3's Reply)
+    
+    Note over C: Client verifies, derives keys for R3
+    Note over C, R3: Circuit Complete (Anonymity established)

@@ -6,13 +6,17 @@
 
 ## 2.a 
 
-- Relays are discovered through the Tor directory protocol. The client downloads a list of relays from the directory authority servers. This is basically a list of different relays that are in the network to which the client can connect. These get cached by the client (and relays). 
-- (TODO: why are directory authority servers considered "semi-trusted" (explain why "semi"))
-- (TODO: info about selection procedure)
+The Tor-network relies on a small set of so-called "directory servers" which are responsible for keeping track of changes in the network topology. They also track the current state of the different nodes in the network, link keypairs to nodes and contain information about exit policies. Each client can fetch information from these directory servers, and ORs can upload network information to them. The directory server combines all this network-state information and create a signed description, called a "directory". The client's binary is pre-loaded with a set of these directory servers, which they can use to bootstrap their view of the network. We consider these directory server to be semi-trusted, meaning that clients should not trust them blindly; only when the directory has been signed by a pre-determined threshold of other semi-trusted directory servers that mutually agree on a common directory.
 
+After obtaining such a directory, the client can start selecting nodes which he can use to establish a circuit. More information about this construction process is given below.
 
 ## 2.b
 
+- Each user on the Tor-network has to run an OP (Onion Proxy). This proxy will construct circuits incrementally, one hop at a time. The client shares a symmetric key between itself and each hop (OR) on the circuit. Building a circuits starts with the OP sending a `CREATE` cell (the command of a fixed-size control cell) to the first node in the chosen path, called OR1. The header of this cell contains a new `CircID` used to identify the circuit being built. The payload of this cell contains the first half of a DH handshake, encrypted with the onion key of OR1. OR1 will then respond with a `CREATED` cell, which contains the second half of the DH handshake. After this, the OP and OR1 share a ephemeral symmetric key which will be used for encrypting future communcation (relay cells) between these parties. 
+- Most circuit consist of 3 hops. This means the circuit needs to be extended 2 more times. Extension of a circuit happens by sending a `RELAY EXTEND` cell. OP sends this cell to OR1 and contains the address of the next OR in the circuit, called OR2. OR1 and OR2 now also build a circuit between each other, again using `CREATE` and `CREATED` cells. The response payload from OR2 is wrapped in a `RELAY EXTENDED` cell by OR1 and is passed back to OP. This results in OP and OR2 also having a shared symmetric key. This process is repeated `N` times with `N` being the amount of desired hops in the circuit.
+- We call this process "telescoping" because it refers we add a layer of encryption at each hop in the circuit (just like a telescope extends into different "layers" when extending it). 
+- To tear down a circuit completely, the OP can send a `DESTORY` cell, which is propagated across the circuit. When an OR receives this type of control cell, all the streams on that circuit are closed.
+- There is also a `RELAY TRUNCATE` cell that an OP can send to any OR in a pre-establish circuit. When an OR receives such cell, it sends a `DESTROY` cell further down the circuit, meaning that only the streams further down the line in the circuit are closed.
 
 ## 2.c
 

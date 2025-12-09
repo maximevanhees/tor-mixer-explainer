@@ -3,11 +3,23 @@
 4.c. Include a Mermaid diagram (`onion-routing-flow.mermaid`)
 
 ## 4.a
-- Layer onion encrpytion:
-    - Client has a symmetric key with EACH relay on the circuit
-    - (TODO: talk about how key-exchange work and how symmetric keys are established between client and each relay).
-    - Basically really like an onion: each exchange of a relay cell adds a layer of encryption. Chain them together and we get onion-like structure where each exchange (between client and it's selected relays) is encapsulated with it's own layer of encryption.
 
+Tor's layered "onion" encryption ensures end-to-end security while allowing hop-by-hop processing, providing unlinkability and forward secrecy. Relay cells are encrypted multiple times (once per hop) using per-hop symmetric keys derived from the ntor-v3 handshake. This creates an "onion" structure: the client encrypts the payload with the exit's key first, then middle's, then guard's (back-to-front). Each hop unwraps its layer, processes, and forwards, without seeing inner layers or the full path.
+
+### Layered Encryption Mechanics
+- **Key Derivation**: For a 3-hop circuit (Client → Guard → Middle → Exit), keys are established telescopically:
+  - Each hop uses ntor-v3 to derive forward/backward keys (Kf/Kb, AES-256-CTR) and digests (Df/Db, SHA3-256 for HS, SHA-1 otherwise) via KDF-RFC5869.
+  - Kf encrypts/decrypts forward (client-to-exit), Kb backward (exit-to-client).
+- **Cell Encryption**:
+  - **Forward Direction**: Client constructs relay cell (command, StreamID, digest=0, payload). Encrypts with exit's Kf, then middle's, then guard's. Result: outermost layer decryptable only by guard.
+  - **Backward Direction**: Exit encrypts with its Kb; each prior hop re-encrypts with theirs.
+- **Hop Behavior**:
+  - **Receive Cell**: Relay receives on TLS channel. Checks CircID to map to circuit.
+  - **Decrypt/Unwrap**: Decrypt with own Kf/Kb (direction-dependent). Verify digest: recompute H(running | cell with digest=0); if matches received digest, process (e.g., RELAY_DATA forwards payload; EXTEND2 extends circuit).
+  - **Update State**: Increment running digest with decrypted cell (digest=0). If invalid, drop or destroy circuit.
+  - **Forward**: Re-encrypt (if not endpoint) with next hop's keys (already layered) and send via appropriate CircID.
+
+This hop-by-hop unwrapping (leaky-pipe) allows exits mid-circuit, enhancing flexibility while hiding path lengths.
 
 ## 4.b
 

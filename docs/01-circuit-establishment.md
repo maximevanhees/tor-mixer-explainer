@@ -4,7 +4,7 @@
 2.d. Include and reference a Mermaid diagram (`circuit-establishment.mermaid`)
 
 
-## 2.a 
+## 2.a - Relay Discovery and Node Selection
 
 A Tor client discovers relays through a distributed directory system that ensures a consistent and authenticated view of the network topology. The client's primary mechanism for relay discovery is obtaining a *consensus document* from directory authorities or caches, which aggregates signed votes from a set of semi-trusted directory authorities.
 
@@ -27,7 +27,7 @@ Once relays are discovered, selection for a circuit (typically 3 hops: entry/gua
 - **Exit Node Selection (Third Hop)**: Exits must support the stream's port/IP (checked via exit policy summaries in consensus/microdescriptors).
 
 
-## 2.b
+## 2.b - Telescoping Circuit Construction
 
 Tor's circuit construction uses a *telescoping* (incremental) process, where circuits are built one hop at a time, negotiating keys and extending the path without revealing the full path to intermediate nodes. This provides perfect forward secrecy. Circuits are multiplexed over TLS channels between relays, using fixed-size (514-byte) cells for communication.
 
@@ -61,7 +61,7 @@ Tor's circuit construction uses a *telescoping* (incremental) process, where cir
 
 This telescoping ensures no hop knows the full path.
 
-## 2.c
+## 2.c - Cryptographic Key Establishment
 
 Tor establishes per-hop symmetric keys using the ntor-v3 handshake, a 1-RTT ECDH protocol with extensions for efficiency and forward secrecy. Keys are derived for layered encryption/digests, ensuring traffic is onion-encrypted (unwrapped hop-by-hop but end-to-end secure).
 
@@ -76,5 +76,5 @@ Tor establishes per-hop symmetric keys using the ntor-v3 handshake, a 1-RTT ECDH
 This ensures secure, authenticated key establishment per hop without full path exposure.
 
 
-## 2.d
+## 2.d - Circuit Establishment Diagram
 Please see Mermaid diagram: [here](/diagrams/circuit-establishment.mermaid)

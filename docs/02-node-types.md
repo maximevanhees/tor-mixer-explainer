@@ -2,7 +2,7 @@
 3.b. Explain what each node can and cannot observe.
 3.c. Discuss why these design constraints aid anonymity
 
-## 3.a
+## 3.a - Relay Node Types
 
 In the Tor network, circuits are constructed using three primary types of relay nodes: guard (entry), middle, and exit relays. These roles are determined by flags in the consensus document (e.g., "Guard", "Exit", "Fast", "Stable"), bandwidth weights, and exit policies. Relays advertise capabilities in their descriptors, and authorities vote on flags. A typical 3-hop exit circuit is: Client → Guard → Middle → Exit → Destination. Internal circuits (e.g., for onion services) omit the exit. Relays can serve multiple roles if flagged appropriately, but path selection enforces separation for anonymity.
 
@@ -23,7 +23,7 @@ In the Tor network, circuits are constructed using three primary types of relay 
 
 These roles ensure layered anonymity, with guards persistent for security and exits handling external risks.
 
-## 3.b
+## 3.b - Node Observations
 
 Tor's layered encryption (onion routing) and leaky-pipe topology limit observations at each node, preventing any single relay from seeing the full path or both endpoints. Relay cells are encrypted end-to-end but unwrapped hop-by-hop using per-hop keys. Observations depend on position, with traffic analysis possible but confirmation attacks mitigated.
 
@@ -64,4 +64,4 @@ Tor's layered encryption (onion routing) and leaky-pipe topology limit observati
 
 All nodes observe TLS metadata (e.g., packet sizes) but not decrypted cells without keys. Global passive adversaries can correlate via timing/volume, but single nodes cannot.
 
-## 3.c
+## 3.c - Design Constraints and Anonymity

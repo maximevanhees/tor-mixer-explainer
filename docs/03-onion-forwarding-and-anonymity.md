@@ -2,7 +2,7 @@
 4.b. Describe anonymity guarantees and their limits.
 4.c. Include a Mermaid diagram (`onion-routing-flow.mermaid`)
 
-## 4.a
+## 4.a - Layered Onion Encryption
 
 Tor's layered "onion" encryption ensures end-to-end security while allowing hop-by-hop processing, providing unlinkability and forward secrecy. Relay cells are encrypted multiple times (once per hop) using per-hop symmetric keys derived from the ntor-v3 handshake. This creates an "onion" structure: the client encrypts the payload with the exit's key first, then middle's, then guard's (back-to-front). Each hop unwraps its layer, processes, and forwards, without seeing inner layers or the full path.
 
@@ -21,7 +21,7 @@ Tor's layered "onion" encryption ensures end-to-end security while allowing hop-
 
 This hop-by-hop unwrapping (leaky-pipe) allows exits mid-circuit, enhancing flexibility while hiding path lengths.
 
-## 4.b
+## 4.b - Anonymity Guarantees and Limits
 
 Tor provides probabilistic anonymity by making it hard to link senders and receivers, obscure traffic patterns, and distribute trust across the network. However, these protections have limits, especially against powerful or global attackers. Anonymity is based on models where partial observers cannot easily confirm connections, measured by concepts like k-anonymity (hiding among k users) and entropy (uncertainty in linking).
 
@@ -41,5 +41,5 @@ Tor provides probabilistic anonymity by making it hard to link senders and recei
 Tor focuses on real-world usability over absolute anonymity, offering strong protection against common threats while recognizing theoretical vulnerabilities.
 
 
-## 4.c
+## 4.c - Onion Routing Flow Diagram
 Please see Mermaid diagram: [here](/diagrams/onion-routing-flow.mermaid)

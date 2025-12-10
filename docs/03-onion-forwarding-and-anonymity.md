@@ -23,26 +23,23 @@ This hop-by-hop unwrapping (leaky-pipe) allows exits mid-circuit, enhancing flex
 
 ## 4.b
 
+Tor provides probabilistic anonymity by making it hard to link senders and receivers, obscure traffic patterns, and distribute trust across the network. However, these protections have limits, especially against powerful or global attackers. Anonymity is based on models where partial observers cannot easily confirm connections, measured by concepts like k-anonymity (hiding among k users) and entropy (uncertainty in linking).
+
+### Anonymity Guarantees
+- **Sender/Receiver Unlinkability**: Clients blend into large groups of about 3 million daily users. Guards remain consistent over sessions (lasting 2-3 months), limiting how many entry points see a client's IP and reducing risks from repeated observations. Layered encryption means no single relay sees both the source and destination: guards spot sources but not final targets (due to encrypted payloads), exits handle destinations and cleartext but not origins, and middles see neither. Paths are chosen with bandwidth-based weights to spread selections evenly, making it tougher for attackers to control enough relays to trace traffic.
+- **Resistance to Traffic Analysis**: Cells are fixed-size (514 bytes) to hide packet lengths. Multiple streams share circuits (via StreamIDs), and the leaky-pipe setup mixes traffic flows, complicating efforts to match volumes or timings. Encryption uses counter-mode AES (non-deterministic) with integrity checks, blocking changes to data. Features like padding cells and flow control add variability to patterns.
+- **Forward Secrecy**: Keys for each handshake are temporary, so even if a relay is compromised later, past traffic stays secure.
+- **Hidden Services**: Rendezvous points allow mutual anonymity: services keep their IPs secret through introduction points, and clients connect via these points without exposing the service's location.
+
+### Limits of Guarantees
+- **Global Passive Adversary**: If someone watches all network traffic (like a group of ISPs), they can match patterns at entry and exit points using timing or volume (e.g., comparing packet arrival times with high accuracy). Tor assumes attackers aren't everywhere; a full global view breaks protections in any fast anonymity system.
+- **Traffic Confirmation**: Attackers who suspect a connection can confirm it by adding patterns (like slowing traffic) or just watching both ends. Active versions involve injecting delays; passive ones rely on natural variations. Tor reduces but doesn't eliminate this—owning entry and exit fully reveals links.
+- **Intersection Attacks**: Watching over time can narrow down users by seeing who is active when (intersecting changing user groups). Guards help but don't stop this if the guard itself is compromised, allowing links across sessions.
+- **Sybil and Denial-of-Service**: Attackers could flood with fake guards or exits to skew paths, or overload nodes to force rerouting. Tor counters with bandwidth requirements for flags and exit policies, but it's not foolproof.
+- **Endpoint Weaknesses**: Exits view unencrypted data (if not using HTTPS), risking snooping. Clients can be tricked by malware. Tor doesn't protect beyond its edges.
+
+Tor focuses on real-world usability over absolute anonymity, offering strong protection against common threats while recognizing theoretical vulnerabilities.
+
 
 ## 4.c
-
-
-## ADDITIONAL INFO:
-- Tor can be censored by blocking connection to addresses of well-known tor relays or with heuristics. Counter-acted by unlisting some relays from public directory (addresses are obtained via other ways)
-    - Unlisted tor relay = "bridge"
-    - Listed tor relay = "public relay"
-
-- Tor uses:
-    - stream cipher: 128-bit AES (counter mode) with IV all 0-bytes
-    - pub-key cipher: RSA 1024-bit keys
-    - Curve25519-group also used (ed25519 signatures)
-    - D-H: g=2, p = predetermined 1024-bit prime
-    - hashes: SHA-1 (old and unsafe: collision attacks possible), SHA-256, SHA3-256
-    - each relay has multiple keypairs:
-        - identity keypair: long-lived, identifies relay (ed25519 now, RSA legacy)
-        - online signing keys (so we can keep id. keypair offline): ed25519 signing key
-            - this key itself is signed with identity pubkey
-        - circuit extension keys = onion keys (lifetime: couple weeks)
-            - used creating/extending circuit
-            - to perform one-way authenticated key-exchange
-        
+Please see Mermaid diagram: [here](/diagrams/onion-routing-flow.mermaid)

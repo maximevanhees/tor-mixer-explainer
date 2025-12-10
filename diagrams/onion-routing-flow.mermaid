@@ -1,0 +1,34 @@
+sequenceDiagram
+    participant Client
+    participant Guard
+    participant Middle
+    participant Exit
+    participant Destination
+
+    Note over Client,Exit: Layered Encryption: Client encrypts with Exit's key first, then Middle's, then Guard's
+
+    Client->>Guard: CREATE2 (ntor-v3 handshake to Guard)
+    Guard->>Client: CREATED2 (keys derived: Kf1/Kb1, Df1/Db1)
+    
+    Client->>Guard: RELAY_EXTEND2 (encrypted: ntor-v3 to Middle)
+    Guard->>Middle: CREATE2 (forwarded)
+    Middle->>Guard: CREATED2
+    Guard->>Client: RELAY_EXTENDED2 (keys derived: Kf2/Kb2, Df2/Db2)
+    
+    Client->>Guard: RELAY_EXTEND2 (encrypted twice: ntor-v3 to Exit)
+    Guard->>Middle: RELAY_EXTEND2 (decrypted once, forwarded)
+    Middle->>Exit: CREATE2 (forwarded)
+    Exit->>Middle: CREATED2
+    Middle->>Guard: RELAY_EXTENDED2
+    Guard->>Client: RELAY_EXTENDED2 (keys derived: Kf3/Kb3, Df3/Db3)
+    
+    Note over Client,Exit: Circuit Complete. Relay Cell Flow:
+    Client->>Guard: RELAY_DATA (encrypted 3 layers)
+    Guard->>Middle: RELAY_DATA (unwrapped 1 layer, digest check)
+    Middle->>Exit: RELAY_DATA (unwrapped 1 more, digest check)
+    Exit->>Destination: Cleartext Data (fully unwrapped)
+    
+    Destination->>Exit: Response
+    Exit->>Middle: RELAY_DATA (encrypted with Kb3)
+    Middle->>Guard: RELAY_DATA (re-encrypted with Kb2)
+    Guard->>Client: RELAY_DATA (re-encrypted with Kb1)

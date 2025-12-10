@@ -65,3 +65,18 @@ Tor's layered encryption (onion routing) and leaky-pipe topology limit observati
 All nodes observe TLS metadata (e.g., packet sizes) but not decrypted cells without keys. Global passive adversaries can correlate via timing/volume, but single nodes cannot.
 
 ## 3.c - Design Constraints and Anonymity
+
+The separation of roles and limited observations enforce **unlinkability** (no single relay links client to destination) and **defense-in-depth** against various attacks:
+
+### Anonymity Properties
+- **No Single Point of Compromise**: Layered encryption ensures no relay sees both endpoints. Guards know clients but not destinations; exits know destinations but not clients; middles know neither. Compromising one relay reveals only adjacent hops.
+- **Predecessor Attack Mitigation**: Persistent guards prevent attackers from repeatedly becoming the entry node across circuits. Without guard persistence, an adversary could eventually observe all client circuits by running many relays.
+- **Traffic Analysis Resistance**: Separation limits correlation attacks. A malicious guard cannot confirm destinations without also controlling the exit (requires collusion). Middles provide mixing, obscuring timing patterns between entry and exit.
+- **Exit Risk Isolation**: Exits handle external visibility (e.g., destination servers seeing exit IPs) but cannot trace back to clients. This separates legal/operational risks from client anonymity.
+
+### Design Trade-offs
+- **Path Length**: 3 hops balance anonymity (more hops = more mixing) against latency and probability of compromise (longer paths increase risk of including a malicious relay). Telescoping construction hides full path from guards.
+- **Role Constraints**: Enforcing no family/subnet overlap prevents a single operator from controlling multiple hops. Exit policies limit destinations, reducing exit relay liability while maintaining network utility.
+- **Leaky-Pipe Topology**: Allows early-exit streams (e.g., to directory servers) without full circuits, improving efficiency while preserving anonymity for sensitive traffic.
+
+These constraints ensure that even if an adversary controls some relays, they cannot trivially deanonymize users without global network visibility or extensive collusion.
